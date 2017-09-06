@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using LostPolygon.WinApiWrapper;
 
 namespace SkypeConsoleLogin {
     internal class Program {
         [STAThread]
         private static void Main(string[] args) {
-            System.Diagnostics.Process.GetProcessesByName("skype").ToList().ForEach(process => process.Kill());
-
-            NativeMethods.AttachConsole(-1);
+#if DEBUG
+            Process.GetProcessesByName("skype").ToList().ForEach(process => process.Kill());
+#endif
+            WinApi.Kernel32.AttachConsole(-1);
 
             string username = null;
             string password = null;
@@ -49,28 +51,21 @@ namespace SkypeConsoleLogin {
                 return;
             }
 
-            //try {
+#if !DEBUG
+            try {
+#endif
                 SkypeLauncher launcher = new SkypeLauncher(skypeExePath, username, password, skypeArguments);
                 launcher.Launch();
-            //} catch (Exception e) {
-            //    Console.WriteLine("Error while starting Skype:\r\n" + e);
-            //    if (Environment.UserInteractive) {
-            //        Console.Read();
-            //    }
-            //}
+#if !DEBUG
+            } catch (Exception e) {
+                Console.WriteLine("Error while starting Skype:\r\n" + e);
+                if (Environment.UserInteractive) {
+                    Console.Read();
+                }
+            }
+#endif
 
-            NativeMethods.FreeConsole();
-        }
-
-        private static class NativeMethods {
-            [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern bool AllocConsole();
-
-            [DllImport("kernel32.dll", SetLastError = true)]
-            public static extern bool FreeConsole();
-
-            [DllImport("kernel32", SetLastError = true)]
-            public static extern bool AttachConsole(int dwProcessId);
+            WinApi.Kernel32.FreeConsole();
         }
     }
 }

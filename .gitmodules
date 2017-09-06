@@ -1,0 +1,3 @@
+[submodule "Submodules/LostPolygon.WinApiWrapper"]
+	path = Submodules/LostPolygon.WinApiWrapper
+	url = git@github.com:LostPolygon/LostPolygon.WinApiWrapper.git
