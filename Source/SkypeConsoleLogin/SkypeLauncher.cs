@@ -12,9 +12,9 @@ using mshtml;
 namespace SkypeConsoleLogin {
     internal class SkypeLauncher {
         private const int kOperationRetryDelay = 30;
-        private const int kSkypeRestartDelay = 1000;
+        private const int kSkypeRestartDelay = 2500;
         private const int kSkypeMaxRestarts = 3;
-        private const int kWaitForSkypeLoginWindowTimeout = 12000;
+        private const int kWaitForSkypeLoginWindowTimeout = 15000;
         private const int kHtmlGetObjectTimeout = 3000;
         private const int kLoginPageReadyTimeout = 10000;
         private readonly string _skypeExePath;
@@ -22,8 +22,6 @@ namespace SkypeConsoleLogin {
         private readonly string _username;
         private readonly string _password;
         private readonly bool _minimized;
-
-
 
         private Process _skypeProcess;
         private HTMLDocumentClass _loginBrowserHtmlDocument;
@@ -297,10 +295,17 @@ namespace SkypeConsoleLogin {
 
             // Get the login page elements
             Debug.WriteLine("Get the login page elements");
-            HTMLInputElementClass passwordInputElement = (HTMLInputElementClass) ((IHTMLElementCollection3) passwdElementCollection).namedItem("passwd");
-            HTMLInputElementClass signInButtonElement = (HTMLInputElementClass) _loginBrowserHtmlDocument.getElementById("idSIButton9");
+            HTMLInputElementClass passwordInputElement = null;
+            HTMLInputElementClass signInButtonElement = null;
 
-            if (passwordInputElement == null || signInButtonElement == null)
+            success = TimedOutOperation(kLoginPageReadyTimeout, kOperationRetryDelay, () => {
+                passwordInputElement = (HTMLInputElementClass) ((IHTMLElementCollection3) passwdElementCollection).namedItem("passwd");
+                signInButtonElement = (HTMLInputElementClass) _loginBrowserHtmlDocument.getElementById("idSIButton9");
+
+                return passwdElementCollection != null && signInButtonElement != null;
+            });
+
+            if (!success)
                 throw new LoginException("Unable to get login form elements");
 
             // Update password
